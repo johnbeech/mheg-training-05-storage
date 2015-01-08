@@ -1,0 +1,113 @@
+defMacro writeAndRead {
+	// Write value (strValueToWrite) to memory location specified by strMemoryLocation
+	app#0.StorePersistent(boolSuccess, (strValueToWrite) :IndirectRef strMemoryLocation)
+	
+	// Prompt a read operation
+	linkReadValueFromRAM.Activate()
+} endMacro
+
+{:Scene("/main.mheg+" 0)
+
+	:Items (
+	
+		// Variables
+		{:BooleanVar boolSuccess :OrigValue False }
+		{:OStringVar strValueToWrite :OrigValue "" }
+		{:OStringVar strLastAction :OrigValue "NO ACTION" }
+		{:OStringVar strMemoryLocation :OrigValue "ram://lastacti" } // 8 character limit
+		
+		// Assets
+		{:Text txtTitle
+			:OrigContent "Storage Demo"
+			:OrigBoxSize 390 45
+			:OrigPosition 50 50
+			:HJustification centre
+			:VJustification centre
+		}
+		
+		{:Text txtLastAction
+			:OrigContent ""
+			:OrigBoxSize 390 45
+			:OrigPosition 50 100
+			:HJustification centre
+			:VJustification centre
+		}
+		
+		// Links
+		{:Link linkStartup
+			:EventSource 		linkStartup
+			:EventType 			IsRunning
+			:InitiallyActive	True
+			:LinkEffect (
+				// Change the title
+				txtTitle.SetData("Storage Demo - Press a colour key")
+			)
+		}
+		
+		{:Link linkPressRed
+			:EventSource	0
+			:EventType		UserInput
+			:EventData		KeyRed
+			:LinkEffect (
+				// Change the value to be written
+				strValueToWrite.SetVariable("PRESSED RED")
+				
+				insertMacro(writeAndRead)
+			)
+		}
+		
+		{:Link linkPressBlue
+			:EventSource	0
+			:EventType		UserInput
+			:EventData		KeyBlue
+			:LinkEffect (
+				// Change the value to be written
+				strValueToWrite.SetVariable("PRESSED BLUE")
+				
+				insertMacro(writeAndRead)
+			)
+		}
+		
+		{:Link linkPressGreen
+			:EventSource	0
+			:EventType		UserInput
+			:EventData		KeyGreen
+			:LinkEffect (
+				// Change the value to be written
+				strValueToWrite.SetVariable("PRESSED GREEN")
+				
+				insertMacro(writeAndRead)
+			)
+		}
+		
+		{:Link linkReadValueFromRAM
+			:EventSource		linkReadValueFromRAM
+			:EventType			IsRunning
+			:InitiallyActive	False	
+			:LinkEffect (
+				// Reset this link so that it can be called again
+				linkReadValueFromRAM.Deactivate()
+			
+				// Clear the value about to be read
+				strLastAction.SetVariable("NO VALUE")
+				
+				// Read to (strLastAction) from memory location specified by strMemoryLocation
+				app#0.ReadPersistent(boolSuccess, (strLastAction) :IndirectRef strMemoryLocation)
+				
+				// Display value on screen
+				txtLastAction.SetData(:IndirectRef strLastAction)
+			)
+		}
+		
+		{:Link linkQuit
+			:EventSource	0
+			:EventType		UserInput
+			:EventData		16
+			:LinkEffect (
+				:Quit (('a' 0))
+			)
+		}
+	)
+	:InputEventReg 4
+	:SceneCS 720 576
+}
